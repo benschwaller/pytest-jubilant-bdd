@@ -243,10 +243,10 @@ def _deploy(
     juju.deploy(charm, name or app, base=base, channel=channel, num_units=num_units)
 
 
-@given(parsers.parse("I integrate '{app_one}' with '{app_two}'"))
-def integrate(context: Context, app_one: str, app_two: str) -> None:
+@given(flexible("I integrate '{app_one}' with '{app_two}' [in model '{model}']"))
+def integrate(context: Context, app_one: str, app_two: str, model: str | None) -> None:
     """Integrate two applications together."""
-    juju = context.get_juju()
+    juju = context.get_juju(model)
 
     juju.integrate(app_one, app_two)
 
@@ -257,16 +257,32 @@ def model_exists(context: Context, model: str) -> None:
     assert model in context.models
 
 
-@given(parsers.parse("'{app_one}' is integrated with '{app_two}'"))
-def is_integrated(context: Context, app_one: str, app_two: str) -> None:
+@given(flexible("'{app_one}' is integrated with '{app_two}' [in model '{model}']"))
+def is_integrated(context: Context, app_one: str, app_two: str, model: str | None) -> None:
     """Verify that two applications are integrated."""
-    app = context.get_app(app_one)
+    try:
+        app = context.get_app(app_one, model=model)
+    except AppNotFoundError:
+        message = f"'{app_one}' is not deployed"
+        if model:
+            message += f" in model '{model}'"
+        raise AssertionError(message)
+    except TooManyDeployedAppsError:
+        raise AssertionError(
+            f"More than one app is named '{app_one}'. Provide the model name in the "
+            f"Gherkin step to check for the integration of a specific app instance. "
+            f"(\"'{app_one}' is integrated with '{app_two}' in model '<model>'\")"
+        )
+
     for integrations in app.relations.values():
         for integration in integrations:
             if integration.related_app == app_two:
                 return
 
-    raise AssertionError(f"'{app_one}' is not integrated with '{app_two}'")
+    message = f"'{app_one}' is not integrated with '{app_two}'"
+    if model:
+        message += f" in model '{model}'"
+    raise AssertionError(message)
 
 
 @given(flexible("'{app}' is deployed [in model '{model}']"))

@@ -30,6 +30,7 @@ from pytest_jubilant_bdd import Context
 from pytest_jubilant_bdd._main import (
     add_unit,
     deploy_local,
+    integrate,
     is_deployed,
     is_integrated,
     model_exists,
@@ -344,7 +345,14 @@ class TestDeployLocal:
 
 
 class TestIntegrate:
-    """Test the ``integrate`` *Given* step handler."""
+    """Test the ``integrate`` *Given* step handler.
+
+    Notes:
+        Error paths are tested by calling the handler directly rather
+        than with ``@scenario`` because ``@scenario`` runs the Gherkin steps
+        before the test body, so exceptions raised during step execution
+        cannot be caught with ``pytest.raises``.
+    """
 
     @staticmethod
     @scenario(REUSABLE_GIVEN_STEP_TESTS, "Integrate")
@@ -356,6 +364,29 @@ class TestIntegrate:
             "slurmctld",
             "slurmd",
         ]
+
+    @staticmethod
+    @scenario(REUSABLE_GIVEN_STEP_TESTS, "Integrate in model")
+    def test_with_optionals(mock_subprocess_run: MagicMock) -> None:
+        """Test ``integrate`` with the ``in model`` optional clause.
+
+        Notes:
+            The ``flexible`` parser allows optional clauses to appear in any
+            order, so a single test exercising the optional is sufficient.
+        """
+        assert mock_subprocess_run.call_args[0][0] == [
+            "juju",
+            "integrate",
+            "--model",
+            f"test-{MODEL_SUFFIX}",
+            "slurmctld",
+            "slurmd",
+        ]
+
+    def test_raises_when_model_missing(self, context: Context) -> None:
+        """``integrate`` raises when the model is not in the context."""
+        with pytest.raises(ModelNotFoundError, match="Model 'nonexistent' not found"):
+            integrate(context, "slurmctld", "slurmd", "nonexistent")
 
 
 class TestModelExists:
@@ -402,12 +433,25 @@ class TestIsIntegrated:
         the relation is missing. Reaching this point means the assertion passed.
         """
 
+    @staticmethod
+    @scenario(REUSABLE_GIVEN_STEP_TESTS, "Is integrated in model")
+    def test_with_optionals(mock_subprocess_run: MagicMock, mock_status_json: None) -> None:
+        """Test ``is_integrated`` with the ``in model`` optional clause.
+
+        Notes:
+            The ``flexible`` parser allows optional clauses to appear in any
+            order, so a single test exercising the optional is sufficient.
+
+        No assertion is needed: the step handler raises ``AssertionError`` if
+        the relation is missing. Reaching this point means the assertion passed.
+        """
+
     def test_raises_when_not_integrated(
         self,
         context: Context,
         mock_subprocess_run: MagicMock,
     ) -> None:
-        """Test ``is_integrated`` raises an ``AssertionError`` when the integration is absent."""
+        """``is_integrated`` raises an ``AssertionError`` when the integration is absent."""
         mock_subprocess_run.return_value = MagicMock(
             stdout=make_status_json({"slurmctld": make_app_without_relation("slurmctld")}),
             stderr="",
@@ -417,7 +461,34 @@ class TestIsIntegrated:
             AssertionError,
             match="'slurmctld' is not integrated with 'slurmd'",
         ):
-            is_integrated(context, "slurmctld", "slurmd")
+            is_integrated(context, "slurmctld", "slurmd", None)
+
+    def test_raises_when_not_found(self, context: Context, mock_subprocess_run: MagicMock) -> None:
+        """``is_integrated`` raises when ``app_one`` is not deployed."""
+        mock_subprocess_run.return_value = MagicMock(
+            stdout=make_status_json(apps={}),
+            stderr="",
+        )
+
+        with pytest.raises(AssertionError, match="'slurmctld' is not deployed"):
+            is_integrated(context, "slurmctld", "slurmd", None)
+
+    def test_raises_when_not_integrated_in_model(
+        self,
+        context: Context,
+        mock_subprocess_run: MagicMock,
+    ) -> None:
+        """``is_integrated`` raises with model context when the integration is absent."""
+        mock_subprocess_run.return_value = MagicMock(
+            stdout=make_status_json({"slurmctld": make_app_without_relation("slurmctld")}),
+            stderr="",
+        )
+
+        with pytest.raises(
+            AssertionError,
+            match="'slurmctld' is not integrated with 'slurmd' in model 'test'",
+        ):
+            is_integrated(context, "slurmctld", "slurmd", "test")
 
 
 class TestIsDeployed:

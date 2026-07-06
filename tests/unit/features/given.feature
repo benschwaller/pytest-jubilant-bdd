@@ -26,6 +26,10 @@ Feature: Reusable `given` steps
   Scenario: Integrate
     Given I integrate 'slurmctld' with 'slurmd'
 
+  Scenario: Integrate in model
+    Given I add model 'test'
+    Given I integrate 'slurmctld' with 'slurmd' in model 'test'
+
   Scenario: Model exists
     Given I add model 'test'
     Given model 'test' exists
@@ -33,6 +37,10 @@ Feature: Reusable `given` steps
   Scenario: Is integrated
     Given I add model 'test'
     Given 'slurmctld' is integrated with 'slurmd'
+
+  Scenario: Is integrated in model
+    Given I add model 'test'
+    Given 'slurmctld' is integrated with 'slurmd' in model 'test'
 
   Scenario: Is deployed
     Given I add model 'test'
