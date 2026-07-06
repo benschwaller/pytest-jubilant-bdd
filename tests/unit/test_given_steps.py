@@ -226,6 +226,20 @@ class TestPackCharm:
         ):
             pack_charm(context, "my-charm", "/path/to/project")
 
+    def test_skips_when_env_var_is_set(
+        self,
+        context: Context,
+        mock_subprocess_run: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """``pack_charm`` skips ``charmcraft pack`` when ``<APP>_CHARM_PATH`` is set."""
+        charm_path = "/tmp/prebuilt/slurmctld.charm"
+        monkeypatch.setenv("SLURMCTLD_CHARM_PATH", charm_path)
+
+        pack_charm(context, "slurmctld", None)
+
+        mock_subprocess_run.assert_not_called()
+
 
 class TestDeploy:
     """Test the ``deploy`` *Given* step handler."""

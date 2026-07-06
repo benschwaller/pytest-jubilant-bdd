@@ -17,6 +17,7 @@
 
 __all__ = ["Context"]
 
+import logging
 import os
 import subprocess
 from collections.abc import Iterator, Mapping
@@ -40,6 +41,8 @@ from ._constants import (
 from ._context import Context
 from ._parsers import flexible, make_dict, make_list
 from .errors import AppNotFoundError, TooManyDeployedAppsError
+
+logger = logging.getLogger("pytest-jubilant-bdd")
 
 # ---
 # `pytest` hooks.
@@ -119,11 +122,19 @@ def add_unit(context: Context, num_units: int, app: str, model: str | None) -> N
 def pack_charm(context: Context, app: str, project_dir: str | None) -> None:
     """Pack a charm from a project directory using ``charmcraft``.
 
+    If the ``<APP>_CHARM_PATH`` environment variable is set, ``charmcraft
+    pack`` is skipped. This allows the ``deploy_local`` step handler to use
+    a pre-built ``*.charm`` file instead.
+
     If ``project_dir`` is not provided, then the current working directory
     is used instead.
     """
-    project = Path(project_dir) if project_dir else Path.cwd()
+    env_var = app.upper().replace("-", "_") + "_CHARM_PATH"
+    if env_var in os.environ:
+        logger.info("skipping charmcraft pack: '%s' is set to '%s'", env_var, os.environ[env_var])
+        return
 
+    project = Path(project_dir) if project_dir else Path.cwd()
     try:
         subprocess.run(
             ["charmcraft", "-v", "pack"],
