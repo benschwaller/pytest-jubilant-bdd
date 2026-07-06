@@ -92,6 +92,11 @@ class ModelMapping(Mapping[str, Juju]):
         self._data: dict[str, Juju] = {}
         self._suffix = suffix if suffix else secrets.token_hex(4)
 
+    @property
+    def suffix(self) -> str:
+        """Get the common suffix used by all models in this mapping."""
+        return self._suffix
+
     def add(self, model: str) -> None:
         """Add a new model to testing context.
 
@@ -169,11 +174,23 @@ class Context:
         models: Mapping that tracks models in the testing context.
     """
 
-    default_model: str | None = None
     wait_timeout: float = DEFAULT_WAIT_TIMEOUT
     action_results: stack[Task] = field(default_factory=lambda: stack[Task](), init=False)
     exec_results: stack[Task] = field(default_factory=lambda: stack[Task](), init=False)
     models: ModelMapping = field(default_factory=ModelMapping, init=False)
+    _default_model: str | None = field(default=None, init=False)
+
+    @property
+    def default_model(self) -> str | None:
+        """Get the default model of this testing context."""
+        return self._default_model
+
+    @default_model.setter
+    def default_model(self, value: str | None) -> None:
+        if isinstance(value, str):
+            value += f"-{self.models.suffix}"
+
+        self._default_model = value
 
     def get_juju(self, model: str | None = None) -> Juju:
         """Get a Juju CLI harness.
@@ -192,7 +209,7 @@ class Context:
         if model:
             return self.models[model]
 
-        return Juju(model=self.default_model)
+        return Juju(model=self._default_model)
 
     def get_app(self, app: str, /, *, model: str | None = None) -> AppStatus:
         """Get an application.

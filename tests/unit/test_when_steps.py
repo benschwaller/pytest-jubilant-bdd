@@ -28,15 +28,17 @@ from pytest_jubilant_bdd import Context
 
 @pytest.fixture(scope="function", autouse=True)
 def _reset_stacks(context: Context) -> None:
-    """Clear ``action_results`` and ``exec_results`` stacks before each test.
+    """Clear session-scoped state before each test.
 
-    The ``context`` fixture is session-scoped, so stacks accumulate across
-    tests. Clearing them ensures each test starts with a clean slate.
+    The ``context`` fixture is session-scoped, so stacks and the default
+    model accumulate across tests. Clearing them ensures each test starts
+    with a clean slate.
     """
     while not context.action_results.is_empty():
         context.action_results.pop()
     while not context.exec_results.is_empty():
         context.exec_results.pop()
+    context.default_model = None
 
 
 @pytest.fixture(scope="function", autouse=True)

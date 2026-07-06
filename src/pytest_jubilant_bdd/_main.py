@@ -361,6 +361,17 @@ def reset_model_config(context: Context, option: str, model: str) -> None:
     juju.model_config(reset=option)
 
 
+@given(parsers.parse("I switch to model '{model}'"))
+def switch_model(context: Context, model: str) -> None:
+    """Switch the default model for subsequent step handlers.
+
+    All following steps that accept an optional model parameter will use
+    this model when no explicit model is provided.
+    """
+    _ = context.models[model]  # Validate that the model exists.
+    context.default_model = model
+
+
 # When steps - Actions
 
 

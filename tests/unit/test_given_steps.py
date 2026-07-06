@@ -39,6 +39,7 @@ from pytest_jubilant_bdd._main import (
     reset_model_config,
     set_app_config,
     set_model_config,
+    switch_model,
 )
 
 # ruff: enable[SLF001]
@@ -94,6 +95,16 @@ def fake_packed_charm(fs: FakeFilesystem) -> None:
         "/path/to/project/my-charm_ubuntu-24.04-amd64.charm",
         contents="fake charm contents",
     )
+
+
+@pytest.fixture(scope="function", autouse=True)
+def _reset_context(context: Context) -> None:
+    """Clear session-scoped state before each test.
+
+    The ``context`` fixture is session-scoped, so the default model
+    persists across tests. Clearing it ensures a clean slate.
+    """
+    context.default_model = None
 
 
 class TestAddModel:
@@ -786,3 +797,25 @@ class TestResetModelConfig:
         """``reset_model_config`` raises when the model is not in the context."""
         with pytest.raises(ModelNotFoundError, match="Model 'nonexistent' not found"):
             reset_model_config(context, "update-status-hook-interval", "nonexistent")
+
+
+class TestSwitchModel:
+    """Test the ``switch_model`` *Given* step handler.
+
+    Notes:
+        Error paths are tested by calling the handler directly rather
+        than with ``@scenario`` because ``@scenario`` runs the Gherkin steps
+        before the test body, so exceptions raised during step execution
+        cannot be caught with ``pytest.raises``.
+    """
+
+    @staticmethod
+    @scenario(REUSABLE_GIVEN_STEP_TESTS, "Switch model")
+    def test_required(context: Context, mock_subprocess_run: MagicMock) -> None:
+        """Test ``switch_model`` with the required clause."""
+        assert context.default_model == f"test-{MODEL_SUFFIX}"
+
+    def test_raises_when_model_missing(self, context: Context) -> None:
+        """``switch_model`` raises when the model is not in the context."""
+        with pytest.raises(ModelNotFoundError, match="Model 'nonexistent' not found"):
+            switch_model(context, "nonexistent")

@@ -40,6 +40,8 @@ pytest-jubilant-bdd package include:
   on a deployed application.
 * `set_model_config`: A `given` step handler for setting a configuration
   option on a Juju model.
+* `switch_model`: A `given` step handler for switching the default model
+  that subsequent step handlers operate on.
 * `run_action`: A `when` step handler for running a Juju action on one or
   more units.
 * `run_exec`: A `when` step handler for executing a command on one or more
