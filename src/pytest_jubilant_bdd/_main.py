@@ -31,6 +31,7 @@ from ._constants import (
     AGENT_STATUS_CAPTURE_GROUP,
     DEFAULT_WAIT_TIMEOUT,
     NO_TEARDOWN_FLAG_NAME,
+    OPTIONAL_MODEL_CLAUSE,
     WAIT_TIMEOUT_FLAG_NAME,
     WORKLOAD_STATUS_CAPTURE_GROUP,
     AgentStatus,
@@ -102,7 +103,7 @@ def add_model(context: Context, model: str) -> None:
 
 
 @given(
-    flexible("I add '{num_units}' %units?% to app '{app}' [in model '{model}']"),
+    flexible("I add '{num_units}' %units?% to app '{app}' " + OPTIONAL_MODEL_CLAUSE),
     converters={"num_units": int},
 )
 def add_unit(context: Context, num_units: int, app: str, model: str | None) -> None:
@@ -144,11 +145,10 @@ def pack_charm(context: Context, app: str, project_dir: str | None) -> None:
 @given(
     flexible(
         "I deploy '{app}' "
-        "[in model '{model}'] "
         "[from channel '{channel}'] "
         "[on base '{base}'] "
         "[with '{num_units}' %units?%] "
-        "[with name '{name}']"
+        "[with name '{name}'] " + OPTIONAL_MODEL_CLAUSE
     ),
     converters={"num_units": lambda v: int(v) if v is not None else 1},
 )
@@ -177,10 +177,9 @@ def deploy(
     flexible(
         "I deploy '{app}' from a local charm "
         "[located at '{path}'] "
-        "[in model '{model}'] "
         "[on base '{base}'] "
         "[with '{num_units}' %units?%] "
-        "[with name '{name}']"
+        "[with name '{name}'] " + OPTIONAL_MODEL_CLAUSE
     ),
     converters={
         "path": lambda v: Path(v) if v is not None else v,
@@ -243,7 +242,7 @@ def _deploy(
     juju.deploy(charm, name or app, base=base, channel=channel, num_units=num_units)
 
 
-@given(flexible("I integrate '{app_one}' with '{app_two}' [in model '{model}']"))
+@given(flexible("I integrate '{app_one}' with '{app_two}' " + OPTIONAL_MODEL_CLAUSE))
 def integrate(context: Context, app_one: str, app_two: str, model: str | None) -> None:
     """Integrate two applications together."""
     juju = context.get_juju(model)
@@ -257,7 +256,7 @@ def model_exists(context: Context, model: str) -> None:
     assert model in context.models
 
 
-@given(flexible("'{app_one}' is integrated with '{app_two}' [in model '{model}']"))
+@given(flexible("'{app_one}' is integrated with '{app_two}' " + OPTIONAL_MODEL_CLAUSE))
 def is_integrated(context: Context, app_one: str, app_two: str, model: str | None) -> None:
     """Verify that two applications are integrated."""
     try:
@@ -285,7 +284,7 @@ def is_integrated(context: Context, app_one: str, app_two: str, model: str | Non
     raise AssertionError(message)
 
 
-@given(flexible("'{app}' is deployed [in model '{model}']"))
+@given(flexible("'{app}' is deployed " + OPTIONAL_MODEL_CLAUSE))
 def is_deployed(context: Context, app: str, model: str | None) -> None:
     """Verify that an application is deployed."""
     try:
@@ -303,7 +302,7 @@ def is_deployed(context: Context, app: str, model: str | None) -> None:
         )
 
 
-@given(flexible("I reset '{option}' for app '{app}' [in model '{model}']"))
+@given(flexible("I reset '{option}' for app '{app}' " + OPTIONAL_MODEL_CLAUSE))
 def reset_app_config(
     context: Context,
     option: str,
@@ -316,7 +315,7 @@ def reset_app_config(
     juju.config(app, reset=option)
 
 
-@given(flexible("I set '{option}' for app '{app}' to '{value}' [in model '{model}']"))
+@given(flexible("I set '{option}' for app '{app}' to '{value}' " + OPTIONAL_MODEL_CLAUSE))
 def set_app_config(
     context: Context,
     option: str,
@@ -357,8 +356,7 @@ def reset_model_config(context: Context, option: str, model: str) -> None:
 @when(
     flexible(
         r"I run action '{action}' on %units? (?P<units>(?:'([^']+)'(?:, (?:and )?|and )?)+)%"
-        "[with parameters '{params}'] "
-        "[in model '{model}'] "
+        "[with parameters '{params}'] " + OPTIONAL_MODEL_CLAUSE
     ),
     converters={"units": make_list, "params": make_dict},
 )
@@ -383,7 +381,7 @@ def run_action(
 @when(
     flexible(
         "I execute '{command}' on %(?P<type_>machines?|units?) (?P<targets>(?:'([^']+)'(?:, (?:and )?|and )?)+)%"
-        "[in model '{model}']"
+        + OPTIONAL_MODEL_CLAUSE
     ),
     converters={"targets": make_list},
 )
