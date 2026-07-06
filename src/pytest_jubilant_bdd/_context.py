@@ -158,6 +158,9 @@ class Context:
     """Object to track and control a testing context.
 
     Attributes:
+        default_model:
+            The default model that :class:`Context` will operate on if the ``model``
+            parameter is not provided to the :meth:`get_juju` method.
         wait_timeout:
             The default timeout for :meth:`wait` (in seconds)
             if that method's ``timeout`` parameter is not specified.
@@ -166,6 +169,7 @@ class Context:
         models: Mapping that tracks models in the testing context.
     """
 
+    default_model: str | None = None
     wait_timeout: float = DEFAULT_WAIT_TIMEOUT
     action_results: stack[Task] = field(default_factory=lambda: stack[Task](), init=False)
     exec_results: stack[Task] = field(default_factory=lambda: stack[Task](), init=False)
@@ -188,7 +192,7 @@ class Context:
         if model:
             return self.models[model]
 
-        return Juju()
+        return Juju(model=self.default_model)
 
     def get_app(self, app: str, /, *, model: str | None = None) -> AppStatus:
         """Get an application.
