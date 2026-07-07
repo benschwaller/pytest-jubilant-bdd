@@ -10,6 +10,11 @@ Feature: Reusable `then` steps
     Given I add model 'gpu'
     Then all agents are 'idle' in models 'test', 'compute', and 'gpu'
 
+  Scenario: All agents idle in two models without comma
+    Given I add model 'sssd'
+    Given I add model 'ldap'
+    Then all agents are 'idle' in models 'sssd' and 'ldap'
+
   Scenario: Workload status for app
     Then the workload status for app 'slurmctld' is 'active'
 

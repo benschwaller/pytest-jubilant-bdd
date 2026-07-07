@@ -106,6 +106,21 @@ class TestAssertAllAgentStatus:
         assertion fails. Reaching this point means the assertion passed.
         """
 
+    @staticmethod
+    @scenario(REUSABLE_THEN_STEP_TESTS, "All agents idle in two models without comma")
+    def test_without_comma(mock_subprocess_run: MagicMock, mock_status_json: None) -> None:
+        """Test ``assert_all_agent_status`` with comma-free ``and`` list syntax.
+
+        Notes:
+            The ``flexible`` parser allows optional clauses to appear in any
+            order, so a single test exercising the optional is sufficient.
+            This scenario also covers the ``'a' and 'b'`` (no comma) list
+            separator form.
+
+        No assertion is needed: the handler raises ``TimeoutError`` if the
+        assertion fails. Reaching this point means the assertion passed.
+        """
+
     def test_raises_when_agent_not_idle(
         self,
         context: Context,

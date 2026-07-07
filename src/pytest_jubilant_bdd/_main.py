@@ -376,7 +376,7 @@ def switch_model(context: Context, model: str) -> None:
 
 @when(
     flexible(
-        r"I run action '{action}' on %units? (?P<units>(?:'([^']+)'(?:, (?:and )?|and )?)+)%"
+        r"I run action '{action}' on %units? (?P<units>(?:'([^']+)'(?:, (?:and )?|\s+and )?)+)%"
         "[with parameters '{params}'] " + OPTIONAL_MODEL_CLAUSE
     ),
     converters={"units": make_list, "params": make_dict},
@@ -401,7 +401,7 @@ def run_action(
 
 @when(
     flexible(
-        "I execute '{command}' on %(?P<type_>machines?|units?) (?P<targets>(?:'([^']+)'(?:, (?:and )?|and )?)+)%"
+        r"I execute '{command}' on %(?P<type_>machines?|units?) (?P<targets>(?:'([^']+)'(?:, (?:and )?|\s+and )?)+)%"
         + OPTIONAL_MODEL_CLAUSE
     ),
     converters={"targets": make_list},
@@ -434,7 +434,7 @@ def run_exec(
 @then(
     flexible(
         rf"all agents are %'{AGENT_STATUS_CAPTURE_GROUP}'% "
-        r"[in %models? (?P<models>(?:'([^']+)'(?:, (?:and )?|and )?)+)%]"
+        r"[in %models? (?P<models>(?:'([^']+)'(?:, (?:and )?|\s+and )?)+)%]"
     ),
     converters={"models": make_list},
 )

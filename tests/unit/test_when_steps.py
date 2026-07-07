@@ -153,3 +153,26 @@ class TestRunExec:
             assert "--unit" in call.args[0]
 
         assert len(context.exec_results) == 3
+
+    @staticmethod
+    @scenario(REUSABLE_WHEN_STEP_TESTS, "Exec command on two units without comma")
+    def test_without_comma(context: Context, mock_subprocess_run: MagicMock) -> None:
+        """Test ``run_exec`` with comma-free ``and`` list syntax.
+
+        Notes:
+            The ``flexible`` parser allows optional clauses to appear in any
+            order, so a single test exercising the optional is sufficient.
+            This scenario also covers the ``'a' and 'b'`` (no comma) list
+            separator form.
+        """
+        exec_calls = [
+            call
+            for call in mock_subprocess_run.call_args_list
+            if call.args[0] and call.args[0][0:2] == ["juju", "exec"]
+        ]
+        assert len(exec_calls) == 2
+        # Without --model the unit is at index 5, command at 7.
+        units_called = [call.args[0][5] for call in exec_calls]
+        assert units_called == ["slurmd/0", "slurmd/1"]
+
+        assert len(context.exec_results) == 2
