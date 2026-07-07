@@ -368,7 +368,6 @@ def switch_model(context: Context, model: str) -> None:
     All following steps that accept an optional model parameter will use
     this model when no explicit model is provided.
     """
-    _ = context.models[model]  # Validate that the model exists.
     context.default_model = model
 
 

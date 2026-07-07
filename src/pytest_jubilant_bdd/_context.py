@@ -163,9 +163,6 @@ class Context:
     """Object to track and control a testing context.
 
     Attributes:
-        default_model:
-            The default model that :class:`Context` will operate on if the ``model``
-            parameter is not provided to the :meth:`get_juju` method.
         wait_timeout:
             The default timeout for :meth:`wait` (in seconds)
             if that method's ``timeout`` parameter is not specified.
@@ -187,10 +184,16 @@ class Context:
 
     @default_model.setter
     def default_model(self, value: str | None) -> None:
-        if isinstance(value, str):
-            value += f"-{self.models.suffix}"
+        if value is None:
+            self._default_model = value
+            return
 
-        self._default_model = value
+        _ = self.models[value]  # Assert that the default model exists.
+        self._default_model = (
+            f"{value}-{self.models.suffix}"
+            if not value.endswith(f"-{self.models.suffix}")
+            else value
+        )
 
     def get_juju(self, model: str | None = None) -> Juju:
         """Get a Juju CLI harness.
